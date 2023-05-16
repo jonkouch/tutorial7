@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 
+
 /**
  * create notification and queue serial data while activity is not in the foreground
  * use listener chain: SerialSocket -> SerialService -> UI fragment
