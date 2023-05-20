@@ -4,6 +4,7 @@ package com.example.tutorial6;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -33,11 +34,18 @@ public class LoadCSV extends AppCompatActivity {
         ArrayList<String[]> csvData = new ArrayList<>();
 
         csvData= CsvRead("/sdcard/csv_dir/data.csv");
-        LineDataSet lineDataSet1 =  new LineDataSet(DataValues(csvData),"x-axis ACC");
-//        LineDataSet lineDataSet2 =  new LineDataSet(DataValues(csvData),"y-axis ACC");
+        LineDataSet lineDataSet1 =  new LineDataSet(DataValues(csvData, 0),"x-axis ACC");
+        LineDataSet lineDataSet2 =  new LineDataSet(DataValues(csvData, 1),"y-axis ACC");
+        LineDataSet lineDataSet3 =  new LineDataSet(DataValues(csvData, 2),"z-axis ACC");
+
+        lineDataSet1.setColor(Color.BLUE);
+        lineDataSet2.setColor(Color.RED);
+        lineDataSet3.setColor(Color.GREEN);
+
         ArrayList<ILineDataSet> dataSets = new ArrayList<>();
         dataSets.add(lineDataSet1);
-//        dataSets.add(lineDataSet2);
+        dataSets.add(lineDataSet2);
+        dataSets.add(lineDataSet3);
         LineData data = new LineData(dataSets);
         lineChart.setData(data);
         lineChart.invalidate();
@@ -75,12 +83,12 @@ public class LoadCSV extends AppCompatActivity {
         return CsvData;
     }
 
-    private ArrayList<Entry> DataValues(ArrayList<String[]> csvData){
+    private ArrayList<Entry> DataValues(ArrayList<String[]> csvData, int index){
         ArrayList<Entry> dataVals = new ArrayList<Entry>();
         for (int i = 0; i < csvData.size(); i++){
 
             dataVals.add(new Entry(Integer.parseInt(csvData.get(i)[3]),
-                    Float.parseFloat(csvData.get(i)[0])));
+                    Float.parseFloat(csvData.get(i)[index])));
 
 
         }
