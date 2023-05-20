@@ -34,8 +34,10 @@ public class LoadCSV extends AppCompatActivity {
 
         csvData= CsvRead("/sdcard/csv_dir/data.csv");
         LineDataSet lineDataSet1 =  new LineDataSet(DataValues(csvData),"x-axis ACC");
+//        LineDataSet lineDataSet2 =  new LineDataSet(DataValues(csvData),"y-axis ACC");
         ArrayList<ILineDataSet> dataSets = new ArrayList<>();
         dataSets.add(lineDataSet1);
+//        dataSets.add(lineDataSet2);
         LineData data = new LineData(dataSets);
         lineChart.setData(data);
         lineChart.invalidate();
@@ -77,7 +79,7 @@ public class LoadCSV extends AppCompatActivity {
         ArrayList<Entry> dataVals = new ArrayList<Entry>();
         for (int i = 0; i < csvData.size(); i++){
 
-            dataVals.add(new Entry(Integer.parseInt(csvData.get(i)[1]),
+            dataVals.add(new Entry(Integer.parseInt(csvData.get(i)[3]),
                     Float.parseFloat(csvData.get(i)[0])));
 
 
