@@ -33,7 +33,7 @@ public class LoadCSV extends AppCompatActivity {
         ArrayList<String[]> csvData = new ArrayList<>();
 
         csvData= CsvRead("/sdcard/csv_dir/data.csv");
-        LineDataSet lineDataSet1 =  new LineDataSet(DataValues(csvData),"temperature");
+        LineDataSet lineDataSet1 =  new LineDataSet(DataValues(csvData),"x-axis ACC");
         ArrayList<ILineDataSet> dataSets = new ArrayList<>();
         dataSets.add(lineDataSet1);
         LineData data = new LineData(dataSets);

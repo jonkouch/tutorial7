@@ -157,7 +157,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
         mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
-        lineDataSet1 =  new LineDataSet(emptyDataValues(), "temperature");
+        lineDataSet1 =  new LineDataSet(emptyDataValues(), "x-axis ACC");
 
         dataSets.add(lineDataSet1);
         data = new LineData(dataSets);
