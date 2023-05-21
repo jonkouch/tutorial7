@@ -409,7 +409,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                             CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
 
                             // parse string values, in this case [0] is tmp & [1] is count (t)
-                            String row[] = new String[]{parts[0], parts[1], parts[2], parts[3]};
+                            String row[] = new String[]{parts[3], parts[0], parts[1], parts[2]};
                             csvWriter.writeNext(row);
                             csvWriter.close();
 
