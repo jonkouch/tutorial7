@@ -81,6 +81,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     int chartIndex;
     boolean flag=false;
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    boolean firstReceive = true;
+    float startTime;
 
 
 
@@ -239,7 +241,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         });
 
         Button stop = view.findViewById(R.id.stop_btn);
-
+        stop.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                flag = false;
+            }
+        });
 
         mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
         lineDataSet1 =  new LineDataSet(emptyDataValues(), "x-axis ACC");
@@ -409,7 +415,15 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                             CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
 
                             // parse string values, in this case [0] is tmp & [1] is count (t)
-                            String row[] = new String[]{parts[3], parts[0], parts[1], parts[2]};
+                            String row[];
+                            if (firstReceive){
+                                firstReceive = false;
+                                row = new String[]{"0", parts[0], parts[1], parts[2]};
+                                startTime = Float.parseFloat(parts[3]);
+                            }
+                            else{
+                                row = new String[]{String.valueOf(Float.parseFloat(parts[3])-startTime), parts[0], parts[1], parts[2]};
+                            }
                             csvWriter.writeNext(row);
                             csvWriter.close();
 
