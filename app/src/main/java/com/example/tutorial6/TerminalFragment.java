@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.Editable;
@@ -22,12 +23,17 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -40,8 +46,12 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
     private enum Connected { False, Pending, True }
@@ -65,6 +75,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     LineDataSet lineDataSet3;
     ArrayList<ILineDataSet> dataSets = new ArrayList<>();
     LineData data;
+    String activityType;
+    String csvName;
+    String stepNumber;
+    int chartIndex;
+    boolean flag=false;
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+
 
 
     /*
@@ -76,7 +93,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceAddress = getArguments().getString("device");
-
     }
 
     @Override
@@ -159,6 +175,72 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         View sendBtn = view.findViewById(R.id.send_btn);
         sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
+
+        Spinner spinner = view.findViewById(R.id.spinner2);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(), R.array.activity_options, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                activityType = parent.getItemAtPosition(position).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Handle the case when no item is selected
+            }
+        });
+
+        EditText textButton = view.findViewById(R.id.csv_name);
+        EditText stepsButton = (EditText) view.findViewById(R.id.step_number);
+
+        Button start = view.findViewById(R.id.start_btn);
+
+
+        start.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                csvName = textButton.getText().toString();
+                stepNumber = stepsButton.getText().toString();
+
+                if(csvName.matches("") || stepNumber.matches("")) {
+                    Toast.makeText(service.getApplicationContext(), "You need to fill the fields above!", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    File file = new File("/sdcard/csv_dir/");
+                    file.mkdirs();
+                    String csv = "/sdcard/csv_dir/" + csvName + ".csv";
+                    CSVWriter csvWriter = null;
+                    try {
+                        csvWriter = new CSVWriter(new FileWriter(csv, true));
+                        String row1[] = new String[]{"NAME:", csvName};
+                        String row2[] = new String[]{"EXPERIMENT TIME:", (String) dtf.format(LocalDateTime.now())};
+                        String row3[] = new String[]{"ACTIVITY TYPE:", activityType};
+                        String row4[] = new String[]{"NAME:", csvName};
+                        String row5[] = new String[]{};
+                        String row6[] = new String[]{"Time[sec]", "ACC X", "ACC Y", "ACC Z"};
+
+                        csvWriter.writeNext(row1);
+                        csvWriter.writeNext(row2);
+                        csvWriter.writeNext(row3);
+                        csvWriter.writeNext(row4);
+                        csvWriter.writeNext(row5);
+                        csvWriter.writeNext(row6);
+                        csvWriter.close();
+
+                        flag = true;
+                        chartIndex = 0;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        Button stop = view.findViewById(R.id.stop_btn);
+
+
         mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
         lineDataSet1 =  new LineDataSet(emptyDataValues(), "x-axis ACC");
         lineDataSet2 =  new LineDataSet(emptyDataValues(), "y-axis ACC");
@@ -178,6 +260,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         Button buttonClear = (Button) view.findViewById(R.id.button1);
         Button buttonCsvShow = (Button) view.findViewById(R.id.button2);
+
+
 
 
         buttonClear.setOnClickListener(new View.OnClickListener() {
@@ -299,63 +383,66 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void receive(byte[] message) {
-        if(hexEnabled) {
-            receiveText.append(TextUtil.toHexString(message) + '\n');
-        } else {
-            String msg = new String(message);
-            if(newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
-                // don't show CR as ^M if directly before LF
-                String msg_to_save = msg;
-                msg_to_save = msg.replace(TextUtil.newline_crlf, TextUtil.emptyString);
-                // check message length
-                if (msg_to_save.length() > 1){
-                // split message string by ',' char
-                String[] parts = msg_to_save.split(",");
-                // function to trim blank spaces
-                parts = clean_str(parts);
+        if(flag) {
+            if (hexEnabled) {
+                receiveText.append(TextUtil.toHexString(message) + '\n');
+            } else {
+                String msg = new String(message);
+                if (newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
+                    // don't show CR as ^M if directly before LF
+                    String msg_to_save = msg;
+                    msg_to_save = msg.replace(TextUtil.newline_crlf, TextUtil.emptyString);
+                    // check message length
+                    if (msg_to_save.length() > 1) {
+                        // split message string by ',' char
+                        String[] parts = msg_to_save.split(",");
+                        // function to trim blank spaces
+                        parts = clean_str(parts);
 
-                // saving data to csv
-                try {
+                        // saving data to csv
+                        try {
 
-                    // create new csv unless file already exists
-                    File file = new File("/sdcard/csv_dir/");
-                    file.mkdirs();
-                    String csv = "/sdcard/csv_dir/data.csv";
-                    CSVWriter csvWriter = new CSVWriter(new FileWriter(csv,true));
+                            // create new csv unless file already exists
+                            File file = new File("/sdcard/csv_dir/");
+                            file.mkdirs();
+                            String csv = "/sdcard/csv_dir/" + csvName + ".csv";
+                            CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
 
-                    // parse string values, in this case [0] is tmp & [1] is count (t)
-                    String row[]= new String[]{parts[0],parts[1],parts[2],parts[3]};
-                    csvWriter.writeNext(row);
-                    csvWriter.close();
+                            // parse string values, in this case [0] is tmp & [1] is count (t)
+                            String row[] = new String[]{parts[0], parts[1], parts[2], parts[3]};
+                            csvWriter.writeNext(row);
+                            csvWriter.close();
 
-                    // add received values to line dataset for plotting the linechart
-                    data.addEntry(new Entry(Integer.valueOf(parts[3]),Float.parseFloat(parts[0])),0);
-                    lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                    data.addEntry(new Entry(Integer.valueOf(parts[3]),Float.parseFloat(parts[1])),1);
-                    lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                    data.addEntry(new Entry(Integer.valueOf(parts[3]),Float.parseFloat(parts[2])),2);
-                    lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                    lineDataSet2.notifyDataSetChanged(); // let the data know a dataSet changed
-                    lineDataSet3.notifyDataSetChanged(); // let the data know a dataSet changed
-                    mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
-                    mpLineChart.invalidate(); // refresh
+                            // add received values to line dataset for plotting the linechart
+                            data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[0])), 0);
+                            lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+                            data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[1])), 1);
+                            lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+                            data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[2])), 2);
+                            lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+                            lineDataSet2.notifyDataSetChanged(); // let the data know a dataSet changed
+                            lineDataSet3.notifyDataSetChanged(); // let the data know a dataSet changed
+                            mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
+                            mpLineChart.invalidate(); // refresh
+                            chartIndex++;
 
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }}
-
-                msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
-                // send msg to function that saves it to csv
-                // special handling if CR and LF come in separate fragments
-                if (pendingNewline && msg.charAt(0) == '\n') {
-                    Editable edt = receiveText.getEditableText();
-                    if (edt != null && edt.length() > 1)
-                        edt.replace(edt.length() - 2, edt.length(), "");
+                    msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
+                    // send msg to function that saves it to csv
+                    // special handling if CR and LF come in separate fragments
+                    if (pendingNewline && msg.charAt(0) == '\n') {
+                        Editable edt = receiveText.getEditableText();
+                        if (edt != null && edt.length() > 1)
+                            edt.replace(edt.length() - 2, edt.length(), "");
+                    }
+                    pendingNewline = msg.charAt(msg.length() - 1) == '\r';
                 }
-                pendingNewline = msg.charAt(msg.length() - 1) == '\r';
+                receiveText.append(TextUtil.toCaretString(msg, newline.length() != 0));
             }
-            receiveText.append(TextUtil.toCaretString(msg, newline.length() != 0));
         }
     }
 

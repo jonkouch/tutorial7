@@ -224,16 +224,16 @@ public class LoadCSV extends AppCompatActivity {
 
     private ArrayList<Entry> DataValues(ArrayList<String[]> csvData, int index) {
         ArrayList<Entry> dataVals = new ArrayList<>();
-        for (int i = 0; i < csvData.size(); i++) {
-            dataVals.add(new Entry(Integer.parseInt(csvData.get(i)[3]), Float.parseFloat(csvData.get(i)[index])));
+        for (int i = 6; i < csvData.size(); i++) {
+            dataVals.add(new Entry(i-6, Float.parseFloat(csvData.get(i)[index])));
         }
         return dataVals;
     }
 
     private void updateGraph() {
-        LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData, 0), "x-axis ACC");
-        LineDataSet lineDataSet2 = new LineDataSet(DataValues(csvData, 1), "y-axis ACC");
-        LineDataSet lineDataSet3 = new LineDataSet(DataValues(csvData, 2), "z-axis ACC");
+        LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData, 1), "x-axis ACC");
+        LineDataSet lineDataSet2 = new LineDataSet(DataValues(csvData, 2), "y-axis ACC");
+        LineDataSet lineDataSet3 = new LineDataSet(DataValues(csvData, 3), "z-axis ACC");
 
         lineDataSet1.setColor(Color.BLUE);
         lineDataSet2.setColor(Color.RED);
