@@ -222,29 +222,29 @@ public class LoadCSV extends AppCompatActivity {
         return CsvData;
     }
 
-    private ArrayList<Entry> DataValues(ArrayList<String[]> csvData, int index) {
-        ArrayList<Entry> dataVals = new ArrayList<>();
-        for (int i = 6; i < csvData.size(); i++) {
-            dataVals.add(new Entry(i-6, Float.parseFloat(csvData.get(i)[index])));
+        private ArrayList<Entry> DataValues(ArrayList<String[]> csvData, int index) {
+            ArrayList<Entry> dataVals = new ArrayList<>();
+            for (int i = 6; i < csvData.size(); i++) {
+                dataVals.add(new Entry(i-6, Float.parseFloat(csvData.get(i)[index])));
+            }
+            return dataVals;
         }
-        return dataVals;
-    }
 
-    private void updateGraph() {
-        LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData, 1), "x-axis ACC");
-        LineDataSet lineDataSet2 = new LineDataSet(DataValues(csvData, 2), "y-axis ACC");
-        LineDataSet lineDataSet3 = new LineDataSet(DataValues(csvData, 3), "z-axis ACC");
+        private void updateGraph() {
+            LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData, 1), "x-axis ACC");
+            LineDataSet lineDataSet2 = new LineDataSet(DataValues(csvData, 2), "y-axis ACC");
+            LineDataSet lineDataSet3 = new LineDataSet(DataValues(csvData, 3), "z-axis ACC");
 
-        lineDataSet1.setColor(Color.BLUE);
-        lineDataSet2.setColor(Color.RED);
-        lineDataSet3.setColor(Color.GREEN);
+            lineDataSet1.setColor(Color.BLUE);
+            lineDataSet2.setColor(Color.RED);
+            lineDataSet3.setColor(Color.GREEN);
 
-        ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-        dataSets.add(lineDataSet1);
-        dataSets.add(lineDataSet2);
-        dataSets.add(lineDataSet3);
-        LineData data = new LineData(dataSets);
-        lineChart.setData(data);
-        lineChart.invalidate();
+            ArrayList<ILineDataSet> dataSets = new ArrayList<>();
+            dataSets.add(lineDataSet1);
+            dataSets.add(lineDataSet2);
+            dataSets.add(lineDataSet3);
+            LineData data = new LineData(dataSets);
+            lineChart.setData(data);
+            lineChart.invalidate();
     }
 }

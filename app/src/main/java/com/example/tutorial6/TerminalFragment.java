@@ -79,12 +79,25 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     String csvName;
     String stepNumber;
     int chartIndex;
-    boolean flag=false;
+    boolean start_flag=false;
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     boolean firstReceive = true;
+    boolean no_action_flag = true;
+    boolean stopped = false;
+
     float startTime;
+    String directoryPath = "/sdcard/csv_dir/";
+    List<String> filenames = new ArrayList<>();
+    File directory = new File(directoryPath);
+    File[] files = directory.listFiles();
 
-
+    String row1[];
+    String row2[];
+    String row3[];
+    String row4[];
+    String row5[];
+    String row6[];
+    ArrayList<String[]> csv_data;
 
     /*
      * Lifecycle
@@ -178,6 +191,18 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
 
+
+        files = directory.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    if(!filenames.contains(file.getName()))
+                        filenames.add(file.getName());
+                }
+            }
+        }
+
         Spinner spinner = view.findViewById(R.id.spinner2);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(), R.array.activity_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -203,38 +228,69 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         start.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                directory = new File(directoryPath);
+                files = directory.listFiles();
                 csvName = textButton.getText().toString();
                 stepNumber = stepsButton.getText().toString();
 
-                if(csvName.matches("") || stepNumber.matches("")) {
+
+                if(!no_action_flag){
+                    Toast.makeText(service.getApplicationContext(), "You cannot start a recording before saving or deleting the previous one!", Toast.LENGTH_SHORT).show();
+                }
+
+                else if(csvName.matches("") || stepNumber.matches("")) {
                     Toast.makeText(service.getApplicationContext(), "You need to fill the fields above!", Toast.LENGTH_SHORT).show();
                 }
+
+                else if(filenames.contains(csvName+".csv")){
+                    Toast.makeText(service.getApplicationContext(), "This file name is taken, please choose a different name!", Toast.LENGTH_SHORT).show();
+                }
                 else {
-                    File file = new File("/sdcard/csv_dir/");
-                    file.mkdirs();
-                    String csv = "/sdcard/csv_dir/" + csvName + ".csv";
-                    CSVWriter csvWriter = null;
-                    try {
-                        csvWriter = new CSVWriter(new FileWriter(csv, true));
-                        String row1[] = new String[]{"NAME:", csvName};
-                        String row2[] = new String[]{"EXPERIMENT TIME:", (String) dtf.format(LocalDateTime.now())};
-                        String row3[] = new String[]{"ACTIVITY TYPE:", activityType};
-                        String row4[] = new String[]{"NAME:", csvName};
-                        String row5[] = new String[]{};
-                        String row6[] = new String[]{"Time[sec]", "ACC X", "ACC Y", "ACC Z"};
+                    csv_data = new ArrayList<>();
+                    filenames.add(csvName + ".csv");
+                    no_action_flag = false;
+                    firstReceive = true;
+                    stopped = false;
+                    row1 = new String[]{"NAME:", csvName};
+                    row2 = new String[]{"EXPERIMENT TIME:", (String) dtf.format(LocalDateTime.now())};
+                    row3 = new String[]{"ACTIVITY TYPE:", activityType};
+                    row4 = new String[]{"NAME:", csvName};
+                    row5 = new String[]{};
+                    row6 = new String[]{"Time[sec]", "ACC X", "ACC Y", "ACC Z"};
 
-                        csvWriter.writeNext(row1);
-                        csvWriter.writeNext(row2);
-                        csvWriter.writeNext(row3);
-                        csvWriter.writeNext(row4);
-                        csvWriter.writeNext(row5);
-                        csvWriter.writeNext(row6);
-                        csvWriter.close();
+                    start_flag = true;
+                    chartIndex = 0;
+                }
+            }
+        });
 
-                        flag = true;
-                        chartIndex = 0;
-                    } catch (IOException e) {
-                        e.printStackTrace();
+
+        Button reset = view.findViewById(R.id.reset_btn);
+        reset.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                if(no_action_flag){
+                    Toast.makeText(service.getApplicationContext(), "What are you trying to reset?", Toast.LENGTH_SHORT).show();
+                }
+                else if(!stopped) {
+                    Toast.makeText(service.getApplicationContext(), "Recording must be stopped before resetting", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    start_flag = false;
+                    no_action_flag = true;
+                    csv_data.clear();
+                    filenames.remove(csvName+".csv");
+
+                    LineData data = mpLineChart.getData();
+                    ILineDataSet set = data.getDataSetByIndex(0);
+                    data.getDataSetByIndex(0);
+                    while (set.removeLast()) {
+                    }
+                    set = data.getDataSetByIndex(1);
+                    while (set.removeLast()) {
+                    }
+                    set = data.getDataSetByIndex(2);
+                    while (set.removeLast()) {
                     }
                 }
             }
@@ -243,7 +299,65 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         Button stop = view.findViewById(R.id.stop_btn);
         stop.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                flag = false;
+                if(no_action_flag)
+                    Toast.makeText(service.getApplicationContext(), "What are you trying to stop?", Toast.LENGTH_SHORT).show();
+                else {
+                    start_flag = false;
+                    stopped = true;
+                }
+            }
+        });
+
+        Button save = view.findViewById(R.id.save_btn);
+        save.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(no_action_flag) {
+                    Toast.makeText(service.getApplicationContext(), "No data to save yet", Toast.LENGTH_SHORT).show();
+                }
+                else if(!stopped) {
+                    Toast.makeText(service.getApplicationContext(), "Recording must be stopped before saving", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    start_flag = false;
+                    no_action_flag = true;
+                    stopped = false;
+
+                    File file = new File("/sdcard/csv_dir/");
+                    file.mkdirs();
+                    String csv = "/sdcard/csv_dir/" + csvName + ".csv";
+                    CSVWriter csvWriter = null;
+
+                    try {
+                        csvWriter = new CSVWriter(new FileWriter(csv, true));
+                        csvWriter.writeNext(row1);
+                        csvWriter.writeNext(row2);
+                        csvWriter.writeNext(row3);
+                        csvWriter.writeNext(row4);
+                        csvWriter.writeNext(row5);
+                        csvWriter.writeNext(row6);
+
+                        for (String[] row: csv_data) {
+                            csvWriter.writeNext(row);
+                        }
+
+                        csvWriter.close();
+                        chartIndex = 0;
+
+                        LineData data = mpLineChart.getData();
+                        ILineDataSet set = data.getDataSetByIndex(0);
+                        data.getDataSetByIndex(0);
+                        while (set.removeLast()) {
+                        }
+                        set = data.getDataSetByIndex(1);
+                        while (set.removeLast()) {
+                        }
+                        set = data.getDataSetByIndex(2);
+                        while (set.removeLast()) {
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
 
@@ -281,7 +395,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 while(set.removeLast()){}
                 set = data.getDataSetByIndex(2);
                 while(set.removeLast()){}
-
             }
         });
 
@@ -389,7 +502,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void receive(byte[] message) {
-        if(flag) {
+        if(start_flag) {
             if (hexEnabled) {
                 receiveText.append(TextUtil.toHexString(message) + '\n');
             } else {
@@ -405,44 +518,30 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         // function to trim blank spaces
                         parts = clean_str(parts);
 
-                        // saving data to csv
-                        try {
-
-                            // create new csv unless file already exists
-                            File file = new File("/sdcard/csv_dir/");
-                            file.mkdirs();
-                            String csv = "/sdcard/csv_dir/" + csvName + ".csv";
-                            CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
-
-                            // parse string values, in this case [0] is tmp & [1] is count (t)
-                            String row[];
-                            if (firstReceive){
-                                firstReceive = false;
-                                row = new String[]{"0", parts[0], parts[1], parts[2]};
-                                startTime = Float.parseFloat(parts[3]);
-                            }
-                            else{
-                                row = new String[]{String.valueOf(Float.parseFloat(parts[3])-startTime), parts[0], parts[1], parts[2]};
-                            }
-                            csvWriter.writeNext(row);
-                            csvWriter.close();
-
-                            // add received values to line dataset for plotting the linechart
-                            data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[0])), 0);
-                            lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                            data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[1])), 1);
-                            lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                            data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[2])), 2);
-                            lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                            lineDataSet2.notifyDataSetChanged(); // let the data know a dataSet changed
-                            lineDataSet3.notifyDataSetChanged(); // let the data know a dataSet changed
-                            mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
-                            mpLineChart.invalidate(); // refresh
-                            chartIndex++;
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        // parse string values, in this case [0] is tmp & [1] is count (t)
+                        String row[];
+                        if (firstReceive){
+                            firstReceive = false;
+                            row = new String[]{"0", parts[0], parts[1], parts[2]};
+                            startTime = (float) (Float.parseFloat(parts[3])/1000.0);
                         }
+                        else{
+                            row = new String[]{String.valueOf((Float.parseFloat(parts[3])/1000.0-startTime)), parts[0], parts[1], parts[2]};
+                        }
+                        csv_data.add(row);
+
+                        // add received values to line dataset for plotting the linechart
+                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[0])), 0);
+                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[1])), 1);
+                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[2])), 2);
+                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+                        lineDataSet2.notifyDataSetChanged(); // let the data know a dataSet changed
+                        lineDataSet3.notifyDataSetChanged(); // let the data know a dataSet changed
+                        mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
+                        mpLineChart.invalidate(); // refresh
+                        chartIndex++;
                     }
 
                     msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
