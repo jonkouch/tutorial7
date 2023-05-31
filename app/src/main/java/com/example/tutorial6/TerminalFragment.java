@@ -254,7 +254,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     row1 = new String[]{"NAME:", csvName};
                     row2 = new String[]{"EXPERIMENT TIME:", (String) dtf.format(LocalDateTime.now())};
                     row3 = new String[]{"ACTIVITY TYPE:", activityType};
-                    row4 = new String[]{"NAME:", csvName};
+                    row4 = new String[]{"COUNT OF ACTUAL STEPS:", stepNumber};
                     row5 = new String[]{};
                     row6 = new String[]{"Time[sec]", "ACC X", "ACC Y", "ACC Z"};
 
@@ -286,12 +286,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     data.getDataSetByIndex(0);
                     while (set.removeLast()) {
                     }
-                    set = data.getDataSetByIndex(1);
-                    while (set.removeLast()) {
-                    }
-                    set = data.getDataSetByIndex(2);
-                    while (set.removeLast()) {
-                    }
+//                    set = data.getDataSetByIndex(1);
+//                    while (set.removeLast()) {
+//                    }
+//                    set = data.getDataSetByIndex(2);
+//                    while (set.removeLast()) {
+//                    }
                 }
             }
         });
@@ -348,12 +348,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         data.getDataSetByIndex(0);
                         while (set.removeLast()) {
                         }
-                        set = data.getDataSetByIndex(1);
-                        while (set.removeLast()) {
-                        }
-                        set = data.getDataSetByIndex(2);
-                        while (set.removeLast()) {
-                        }
+//                        set = data.getDataSetByIndex(1);
+//                        while (set.removeLast()) {
+//                        }
+//                        set = data.getDataSetByIndex(2);
+//                        while (set.removeLast()) {
+//                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -362,17 +362,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         });
 
         mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
-        lineDataSet1 =  new LineDataSet(emptyDataValues(), "x-axis ACC");
-        lineDataSet2 =  new LineDataSet(emptyDataValues(), "y-axis ACC");
-        lineDataSet3 =  new LineDataSet(emptyDataValues(), "z-axis ACC");
+        lineDataSet1 =  new LineDataSet(emptyDataValues(), "Acceleration");
+//        lineDataSet2 =  new LineDataSet(emptyDataValues(), "y-axis ACC");
+//        lineDataSet3 =  new LineDataSet(emptyDataValues(), "z-axis ACC");
 
         lineDataSet1.setColor(Color.BLUE);
-        lineDataSet2.setColor(Color.RED);
-        lineDataSet2.setColor(Color.GREEN);
+//        lineDataSet2.setColor(Color.RED);
+//        lineDataSet2.setColor(Color.GREEN);
 
         dataSets.add(lineDataSet1);
-        dataSets.add(lineDataSet2);
-        dataSets.add(lineDataSet3);
+//        dataSets.add(lineDataSet2);
+//        dataSets.add(lineDataSet3);
 
         data = new LineData(dataSets);
         mpLineChart.setData(data);
@@ -391,10 +391,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 ILineDataSet set = data.getDataSetByIndex(0);
                 data.getDataSetByIndex(0);
                 while(set.removeLast()){}
-                set = data.getDataSetByIndex(1);
-                while(set.removeLast()){}
-                set = data.getDataSetByIndex(2);
-                while(set.removeLast()){}
+//                set = data.getDataSetByIndex(1);
+//                while(set.removeLast()){}
+//                set = data.getDataSetByIndex(2);
+//                while(set.removeLast()){}
             }
         });
 
@@ -530,15 +530,16 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         }
                         csv_data.add(row);
 
+                        float N = (float) Math.sqrt(Math.pow(Float.parseFloat(parts[0]), 2) + Math.pow(Float.parseFloat(parts[1]), 2) + Math.pow(Float.parseFloat(parts[2]), 2));
                         // add received values to line dataset for plotting the linechart
-                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[0])), 0);
+                        data.addEntry(new Entry(chartIndex, N), 0);
                         lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[1])), 1);
-                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[2])), 2);
-                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                        lineDataSet2.notifyDataSetChanged(); // let the data know a dataSet changed
-                        lineDataSet3.notifyDataSetChanged(); // let the data know a dataSet changed
+//                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[1])), 1);
+//                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+//                        data.addEntry(new Entry(chartIndex, Float.parseFloat(parts[2])), 2);
+//                        lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
+//                        lineDataSet2.notifyDataSetChanged(); // let the data know a dataSet changed
+//                        lineDataSet3.notifyDataSetChanged(); // let the data know a dataSet changed
                         mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
                         mpLineChart.invalidate(); // refresh
                         chartIndex++;
