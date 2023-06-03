@@ -36,6 +36,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -84,6 +87,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     boolean firstReceive = true;
     boolean no_action_flag = true;
     boolean stopped = false;
+    View view;
 
     float startTime;
     String directoryPath = "/sdcard/csv_dir/";
@@ -176,7 +180,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_terminal, container, false);
+        view = inflater.inflate(R.layout.fragment_terminal, container, false);
         receiveText = view.findViewById(R.id.receive_text);                          // TextView performance decreases with number of spans
         receiveText.setTextColor(getResources().getColor(R.color.colorRecieveText)); // set as default color to reduce number of spans
         receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -256,7 +260,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     row3 = new String[]{"ACTIVITY TYPE:", activityType};
                     row4 = new String[]{"COUNT OF ACTUAL STEPS:", stepNumber};
                     row5 = new String[]{};
-                    row6 = new String[]{"Time[sec]", "ACC X", "ACC Y", "ACC Z"};
+                    row6 = new String[]{"Time[sec]", "Acceleration"};
 
                     start_flag = true;
                     chartIndex = 0;
@@ -304,6 +308,15 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 else {
                     start_flag = false;
                     stopped = true;
+
+                    if (! Python.isStarted()){
+                        Python.start(new AndroidPlatform(getContext()));
+                    }
+                    Python py = Python.getInstance();
+                    PyObject pyobj = py.getModule("data_analysis");
+                    PyObject obj= pyobj.callAttr("reset");
+                    TextView num_of_steps_predicted = (TextView) view.findViewById(R.id.num_of_steps_predicted);
+                    num_of_steps_predicted.setText("number of steps : 0");
                 }
             }
         });
@@ -326,6 +339,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     file.mkdirs();
                     String csv = "/sdcard/csv_dir/" + csvName + ".csv";
                     CSVWriter csvWriter = null;
+
 
                     try {
                         csvWriter = new CSVWriter(new FileWriter(csv, true));
@@ -517,20 +531,21 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         String[] parts = msg_to_save.split(",");
                         // function to trim blank spaces
                         parts = clean_str(parts);
+                        float N = (float) Math.sqrt(Math.pow(Float.parseFloat(parts[0]), 2) + Math.pow(Float.parseFloat(parts[1]), 2) + Math.pow(Float.parseFloat(parts[2]), 2));
+
 
                         // parse string values, in this case [0] is tmp & [1] is count (t)
                         String row[];
                         if (firstReceive){
                             firstReceive = false;
-                            row = new String[]{"0", parts[0], parts[1], parts[2]};
+                            row = new String[]{"0", String.valueOf(N)};
                             startTime = (float) (Float.parseFloat(parts[3])/1000.0);
                         }
                         else{
-                            row = new String[]{String.valueOf((Float.parseFloat(parts[3])/1000.0-startTime)), parts[0], parts[1], parts[2]};
+                            row = new String[]{String.valueOf((Float.parseFloat(parts[3])/1000.0-startTime)), String.valueOf(N)};
                         }
                         csv_data.add(row);
 
-                        float N = (float) Math.sqrt(Math.pow(Float.parseFloat(parts[0]), 2) + Math.pow(Float.parseFloat(parts[1]), 2) + Math.pow(Float.parseFloat(parts[2]), 2));
                         // add received values to line dataset for plotting the linechart
                         data.addEntry(new Entry(chartIndex, N), 0);
                         lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
@@ -543,6 +558,24 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
                         mpLineChart.invalidate(); // refresh
                         chartIndex++;
+
+
+                        TextView num_of_steps_predicted = (TextView) view.findViewById(R.id.num_of_steps_predicted);
+
+
+
+                        if (! Python.isStarted()){
+                            Python.start(new AndroidPlatform(getContext()));
+                        }
+                        Python py = Python.getInstance();
+                        PyObject pyobj = py.getModule("data_analysis");
+                        PyObject obj= pyobj.callAttr("step_count", N);
+                        num_of_steps_predicted.setText("number of steps : " + obj.toString());
+
+
+
+
+
                     }
 
                     msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);

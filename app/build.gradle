@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdk 31
 
     defaultConfig {
-        applicationId "com.example.tutorial6"
+        applicationId 'com.example.tutorial7'
         minSdkVersion 21
         targetSdkVersion 31
         versionCode 1
@@ -23,6 +23,8 @@ android {
             buildPython "C:/Users/jonat/anaconda3/envs/ultimate/python.exe"
             pip{
                 install "numpy"
+                install "scipy"
+                install "pandas"
             }
         }
 
@@ -52,5 +54,6 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'
     implementation 'com.opencsv:opencsv:4.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+
 
 }
