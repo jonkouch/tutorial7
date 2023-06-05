@@ -81,6 +81,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     String activityType;
     String csvName;
     String stepNumber;
+    String estimatedSteps;
     int chartIndex;
     boolean start_flag=false;
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -237,7 +238,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 csvName = textButton.getText().toString();
                 stepNumber = stepsButton.getText().toString();
 
-
                 if(!no_action_flag){
                     Toast.makeText(service.getApplicationContext(), "You cannot start a recording before saving or deleting the previous one!", Toast.LENGTH_SHORT).show();
                 }
@@ -259,7 +259,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     row2 = new String[]{"EXPERIMENT TIME:", (String) dtf.format(LocalDateTime.now())};
                     row3 = new String[]{"ACTIVITY TYPE:", activityType};
                     row4 = new String[]{"COUNT OF ACTUAL STEPS:", stepNumber};
-                    row5 = new String[]{};
                     row6 = new String[]{"Time[sec]", "Acceleration"};
 
                     start_flag = true;
@@ -281,6 +280,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 }
                 else {
                     start_flag = false;
+                    stopped = false;
                     no_action_flag = true;
                     csv_data.clear();
                     filenames.remove(csvName+".csv");
@@ -305,6 +305,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             public void onClick(View v) {
                 if(no_action_flag)
                     Toast.makeText(service.getApplicationContext(), "What are you trying to stop?", Toast.LENGTH_SHORT).show();
+                else if(stopped){
+                    Toast.makeText(service.getApplicationContext(), "Already stopped", Toast.LENGTH_SHORT).show();
+                }
                 else {
                     start_flag = false;
                     stopped = true;
@@ -314,6 +317,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     }
                     Python py = Python.getInstance();
                     PyObject pyobj = py.getModule("data_analysis");
+
                     PyObject obj= pyobj.callAttr("reset");
                     TextView num_of_steps_predicted = (TextView) view.findViewById(R.id.num_of_steps_predicted);
                     num_of_steps_predicted.setText("number of steps : 0");
@@ -340,7 +344,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     String csv = "/sdcard/csv_dir/" + csvName + ".csv";
                     CSVWriter csvWriter = null;
 
-
+                    row5 = new String[]{"ESTIMATED NUMBER OF STEPS:", estimatedSteps};
                     try {
                         csvWriter = new CSVWriter(new FileWriter(csv, true));
                         csvWriter.writeNext(row1);
@@ -538,11 +542,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         String row[];
                         if (firstReceive){
                             firstReceive = false;
-                            row = new String[]{"0", String.valueOf(N)};
+                            row = new String[]{"0", parts[0], parts[1], parts[2]};
                             startTime = (float) (Float.parseFloat(parts[3])/1000.0);
                         }
                         else{
-                            row = new String[]{String.valueOf((Float.parseFloat(parts[3])/1000.0-startTime)), String.valueOf(N)};
+                            row = new String[]{String.valueOf((Float.parseFloat(parts[3])/1000.0-startTime)), parts[0], parts[1], parts[2]};
                         }
                         csv_data.add(row);
 
@@ -571,10 +575,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         PyObject pyobj = py.getModule("data_analysis");
                         PyObject obj= pyobj.callAttr("step_count", N);
                         num_of_steps_predicted.setText("number of steps : " + obj.toString());
-
-
-
-
+                        estimatedSteps = obj.toString();
 
                     }
 

@@ -19,6 +19,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -33,12 +34,15 @@ import java.util.ArrayList;
 
 import java.util.List;
 
+
+
 public class LoadCSV extends AppCompatActivity {
     private static String EXTRA_INSTANCE_ID;
     private static Build.VERSION Util;
     String selectedFile;
     LineChart lineChart;
     ArrayList<String[]> csvData;
+    String num_of_predicted_steps;
 
 
 //    @Nullable
@@ -66,6 +70,7 @@ public class LoadCSV extends AppCompatActivity {
         setContentView(R.layout.activity_load_csv);
         Button BackButton = findViewById(R.id.button_back);
         Button LoadButton = findViewById(R.id.button_load);
+        TextView num_of_steps_predicted= findViewById(R.id.num_of_steps_predicted_in_load);
         lineChart = findViewById(R.id.line_chart);
 
         csvData = new ArrayList<>();
@@ -155,21 +160,22 @@ public class LoadCSV extends AppCompatActivity {
         return CsvData;
     }
 
-        private ArrayList<Entry> DataValues(ArrayList<String[]> csvData, int index) {
+        private ArrayList<Entry> DataValues(ArrayList<String[]> csvData) {
             ArrayList<Entry> dataVals = new ArrayList<>();
             for (int i = 6; i < csvData.size(); i++) {
-                dataVals.add(new Entry(i-6, Float.parseFloat(csvData.get(i)[index])));
+                dataVals.add(new Entry(i-6, ((float) Math.sqrt(Math.pow(Float.parseFloat(csvData.get(i)[1]), 2) + Math.pow(Float.parseFloat(csvData.get(i)[2]), 2) + Math.pow(Float.parseFloat(csvData.get(i)[3]), 2)))));
             }
             return dataVals;
         }
 
         private void updateGraph() {
-            LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData, 1), "Acceleration");
+            LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData), "Acceleration");
             lineDataSet1.setColor(Color.BLUE);
             ArrayList<ILineDataSet> dataSets = new ArrayList<>();
             dataSets.add(lineDataSet1);
             LineData data = new LineData(dataSets);
             lineChart.setData(data);
             lineChart.invalidate();
+
     }
 }

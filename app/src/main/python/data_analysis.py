@@ -14,5 +14,4 @@ def step_count(sample):
 
 def reset():
     global samples_array
-    samples_array = samples_array.clear()
-    return 0
+    samples_array = []
