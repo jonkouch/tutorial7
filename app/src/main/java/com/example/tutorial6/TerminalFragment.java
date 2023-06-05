@@ -102,6 +102,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     String row4[];
     String row5[];
     String row6[];
+    String row7[];
     ArrayList<String[]> csv_data;
 
     /*
@@ -260,6 +261,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     row3 = new String[]{"ACTIVITY TYPE:", activityType};
                     row4 = new String[]{"COUNT OF ACTUAL STEPS:", stepNumber};
                     row6 = new String[]{"Time[sec]", "Acceleration"};
+                    row7 = new String[]{};
 
                     start_flag = true;
                     chartIndex = 0;
@@ -353,6 +355,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         csvWriter.writeNext(row4);
                         csvWriter.writeNext(row5);
                         csvWriter.writeNext(row6);
+                        csvWriter.writeNext(row7);
 
                         for (String[] row: csv_data) {
                             csvWriter.writeNext(row);

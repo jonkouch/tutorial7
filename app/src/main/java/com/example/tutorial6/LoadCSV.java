@@ -1,16 +1,8 @@
 package com.example.tutorial6;
 
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import android.Manifest;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,7 +34,7 @@ public class LoadCSV extends AppCompatActivity {
     String selectedFile;
     LineChart lineChart;
     ArrayList<String[]> csvData;
-    String num_of_predicted_steps;
+    String num_of_predicted_steps_string;
 
 
 //    @Nullable
@@ -70,7 +62,7 @@ public class LoadCSV extends AppCompatActivity {
         setContentView(R.layout.activity_load_csv);
         Button BackButton = findViewById(R.id.button_back);
         Button LoadButton = findViewById(R.id.button_load);
-        TextView num_of_steps_predicted= findViewById(R.id.num_of_steps_predicted_in_load);
+        TextView num_of_steps_predicted_button= findViewById(R.id.num_of_steps_predicted_in_load);
         lineChart = findViewById(R.id.line_chart);
 
         csvData = new ArrayList<>();
@@ -121,7 +113,10 @@ public class LoadCSV extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 csvData = CsvRead("/sdcard/csv_dir/" + selectedFile);
+                num_of_predicted_steps_string = csvData.get(4)[0] + csvData.get(4)[1];
+                num_of_steps_predicted_button.setText(num_of_predicted_steps_string);
                 updateGraph();
+
             }
         });
 
@@ -145,6 +140,7 @@ public class LoadCSV extends AppCompatActivity {
 
     private ArrayList<String[]> CsvRead(String path) {
         ArrayList<String[]> CsvData = new ArrayList<>();
+
         try {
             File file = new File(path);
             CSVReader reader = new CSVReader(new FileReader(file));
@@ -161,14 +157,16 @@ public class LoadCSV extends AppCompatActivity {
     }
 
         private ArrayList<Entry> DataValues(ArrayList<String[]> csvData) {
+
             ArrayList<Entry> dataVals = new ArrayList<>();
-            for (int i = 6; i < csvData.size(); i++) {
-                dataVals.add(new Entry(i-6, ((float) Math.sqrt(Math.pow(Float.parseFloat(csvData.get(i)[1]), 2) + Math.pow(Float.parseFloat(csvData.get(i)[2]), 2) + Math.pow(Float.parseFloat(csvData.get(i)[3]), 2)))));
+            for (int i = 7; i < csvData.size(); i++) {
+                dataVals.add(new Entry(i-7, ((float) Math.sqrt(Math.pow(Float.parseFloat(csvData.get(i)[1]), 2) + Math.pow(Float.parseFloat(csvData.get(i)[2]), 2) + Math.pow(Float.parseFloat(csvData.get(i)[3]), 2)))));
             }
             return dataVals;
         }
 
         private void updateGraph() {
+
             LineDataSet lineDataSet1 = new LineDataSet(DataValues(csvData), "Acceleration");
             lineDataSet1.setColor(Color.BLUE);
             ArrayList<ILineDataSet> dataSets = new ArrayList<>();
